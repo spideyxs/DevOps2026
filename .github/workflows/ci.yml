@@ -14,8 +14,10 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: npm install
       - name: Build
-        run: echo "Building application..."
+        run: npm run build
 
   test:
     name: Run Tests
@@ -24,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Run unit tests
-        run: echo "Running tests..."
+        run: npm test
 
   lint:
     name: Lint Check
@@ -33,36 +35,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Run lint
-        run: echo "Running lint..."
-
-  build_image:
-    name: Build Docker Image
-    runs-on: self-hosted
-    needs: lint
-    steps:
-      - uses: actions/checkout@v3
-      - name: Build Docker image
-        run: |
-          docker build -t myapp:${{ github.sha }} .
-
-  push_image:
-    name: Push Docker Image
-    runs-on: self-hosted
-    needs: build_image
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Push image
-        run: |
-          docker tag myapp:${{ github.sha }} myapp:release-${{ github.run_number }}
-          echo "Pushing image..."
+        run: npm run lint
 
   deploy:
     name: Deploy to Production
     runs-on: self-hosted
-    needs: push_image
+    needs: lint
     if: github.ref == 'refs/heads/main'
     environment:
       name: production
     steps:
-      - name: Deploy
-        run: echo "Deploying to production..."
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: npm install
+      - name: Restart application
+        run: |
+          pm2 restart app || pm2 start app.js --name app
