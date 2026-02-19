@@ -1,0 +1,97 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+
+  # ============================
+  # STAGE 1 — BUILDING
+  # ============================
+  build-app:
+    runs-on: ubuntu-latest
+    environment: building
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build App
+        run: |
+          echo "Building application"
+          echo "Done"
+
+  # ============================
+  # STAGE 2 — TESTING
+  # ============================
+  run-unit-test:
+    runs-on: ubuntu-latest
+    needs: build-app
+    environment: testing
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare testing data
+        run: echo "Prepare testing data"
+
+      - name: Run unit test
+        run: echo "Run unit test"
+
+      - name: Clean up temporary data
+        run: echo "Clean up temporary data"
+
+  run-lint:
+    runs-on: ubuntu-latest
+    needs: build-app
+    environment: testing
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run linter
+        run: echo "Running Linter"
+
+  # ============================
+  # STAGE 3 — PACKAGING
+  # ============================
+  build-image:
+    runs-on: ubuntu-latest
+    needs: [run-unit-test, run-lint]
+    environment: packaging
+    steps:
+      - name: Build image
+        run: echo "Building images"
+
+  push-image:
+    runs-on: ubuntu-latest
+    needs: build-image
+    environment: packaging
+    steps:
+      - name: Push image
+        run: echo "Pushing images"
+
+  # ============================
+  # STAGE 4 — DEPLOY
+  # ============================
+  deploy:
+    runs-on: ubuntu-latest
+    needs: push-image
+    environment: deploy
+    steps:
+      - name: Deploy to staging
+        run: echo "Deploy staging server"
+
+  # ============================
+  # Self-Hosted Runner Job
+  # ============================
+  test-self-hosted:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Print message
+        run: echo "Hello from self-hosted runner!"
